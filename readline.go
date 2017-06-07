@@ -17,7 +17,10 @@
 //
 package readline
 
-import "io"
+import (
+	"io"
+	"net"
+)
 
 type Instance struct {
 	Config    *Config
@@ -217,6 +220,23 @@ func (i *Instance) ReadPasswordEx(prompt string, l Listener) ([]byte, error) {
 
 func (i *Instance) ReadPassword(prompt string) ([]byte, error) {
 	return i.Operation.Password(prompt)
+}
+
+func (i *Instance) IsLocal() bool {
+	srv, ok := i.Config.Stdout.(*RemoteSvr)
+	if ok {
+		remoteHost, _, err := net.SplitHostPort(srv.conn.RemoteAddr().String())
+		if err != nil {
+			panic(err)
+		}
+		localHost, _, err := net.SplitHostPort(srv.conn.LocalAddr().String())
+		if err != nil {
+			panic(err)
+		}
+		return remoteHost == localHost
+	} else {
+		return true
+	}
 }
 
 type Result struct {
